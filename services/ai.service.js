@@ -1,17 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-/**
- * AI service to convert natural language to segment rules using Google's Gemini API
- * with fallback model support
- */
 const aiService = {
-    /**
-     * Try to generate content with multiple model options if the primary one fails
-     * @param {GoogleGenerativeAI} genAI - Google AI instance
-     * @param {string} prompt - The prompt to send
-     * @param {string[]} modelOptions - Array of models to try in order
-     * @returns {Promise<string>} - Generated text response
-     */
+   
     tryWithFallbackModels: async function(genAI, prompt, modelOptions) {
         let lastError = null;
         
@@ -26,19 +16,13 @@ const aiService = {
             } catch (error) {
                 console.log(`Model ${modelName} failed: ${error.message}`);
                 lastError = error;
-                // Continue to the next model option
             }
         }
         
-        // If all models failed, throw the last error
         throw lastError;
     },
 
-    /**
-     * Convert natural language description to segment rules
-     * @param {string} description - Natural language description of the segment
-     * @returns {Promise<object>} - JSON rules object
-     */
+    // natural language to rules 
     naturalLanguageToRules: async function(description) {
         try {
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -66,7 +50,6 @@ const aiService = {
                 Return ONLY the JSON object, nothing else.
             `;
             
-            // Define models to try in order of preference
             const modelOptions = [
                 "gemini-2.0-flash-lite", 
                 "gemini-1.5-flash",
@@ -75,7 +58,6 @@ const aiService = {
             
             const text = await this.tryWithFallbackModels(genAI, prompt, modelOptions);
             
-            // Parse the JSON from the response
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 return JSON.parse(jsonMatch[0]);
@@ -88,17 +70,11 @@ const aiService = {
         }
     },
     
-    /**
-     * Generate promotional message based on campaign goal
-     * @param {string} goal - Campaign goal description
-     * @param {string} customerName - Customer name for personalization
-     * @returns {Promise<string>} - Generated promotional message
-     */
+    // promotional message
     generatePromotionalMessage: async function(goal, customerName = "{{name}}") {
         try {
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
             
-            // Completely revised prompt to generate longer, compelling messages
             const prompt = `
                 Generate a compelling marketing message for an email or SMS campaign.
                 
@@ -117,16 +93,14 @@ const aiService = {
                 Return ONLY the final message text, nothing else.
             `;
             
-            // Define models to try in order of preference
             const modelOptions = [
-                "gemini-1.5-pro", // Use Pro model first for better quality
+                "gemini-1.5-pro", 
                 "gemini-1.5-flash",
                 "gemini-2.0-flash-lite" 
             ];
             
             const message = await this.tryWithFallbackModels(genAI, prompt, modelOptions);
             
-            // Ensure we haven't gotten a message that's too short
             if (message.length < 120) {
                 throw new Error("Generated message is too short, needs to be more comprehensive");
             }
@@ -135,7 +109,6 @@ const aiService = {
         } catch (error) {
             console.error("Error in AI message generation:", error);
             
-            // Fallback to a template message if AI generation fails
             return `Hello ${customerName}, thank you for being a valued customer! We're excited to offer you exclusive access to our special Spring Sale promotion. Enjoy significant discounts on our most popular products and services, designed specifically for loyal customers like you. Don't miss this limited-time opportunity - visit our website or contact us today to learn more! [Link]`;
         }
     }

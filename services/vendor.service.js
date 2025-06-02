@@ -2,28 +2,16 @@ const axios = require('axios');
 const CommunicationLog = require('../models/communication-log.model');
 const Campaign = require('../models/campaign.model');
 
-/**
- * Vendor service to simulate message delivery with 90% success and 10% failure rate
- * This is a dummy implementation to simulate an external service
- */
+
 const vendorService = {
-    /**
-     * Send a message to a customer
-     * @param {string} communicationId - ID of the communication log entry
-     * @param {string} recipient - Phone number or email of the recipient
-     * @param {string} message - The personalized message to send
-     */
     sendMessage: async function(communicationId, recipient, message) {
         try {
             console.log(`Sending message to ${recipient}: ${message}`);
             
-            // Simulate processing time (reduced for better UX)
             await new Promise(resolve => setTimeout(resolve, 300));
             
-            // Simulate 90% success rate, 10% failure
             const isSuccess = Math.random() < 0.9;
             
-            // Get status and failure reason
             const status = isSuccess ? 'sent' : 'failed';
             const failureReason = isSuccess ? null : 'Delivery failed to recipient';
             

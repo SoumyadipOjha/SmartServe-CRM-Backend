@@ -1,22 +1,35 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const customerController = require('../controllers/customer.controller');
-const { validateCustomer } = require('../middleware/validation.middleware');
-const { authenticateJWT } = require('../middleware/auth.middleware');
+const customerController = require("../controllers/customer.controller");
+const { validateCustomer } = require("../middleware/validation.middleware");
+const { authenticateJWT } = require("../middleware/auth.middleware");
 
 // POST /api/customers - Create a new customer
-router.post('/', authenticateJWT, validateCustomer, customerController.createCustomer);
+router.post(
+  "/",
+  authenticateJWT,
+  validateCustomer,
+  customerController.createCustomer
+);
+
+// POST /api/customers/bulk - Create multiple customers
+router.post("/bulk", authenticateJWT, customerController.bulkUpload);
 
 // GET /api/customers - Get all customers
-router.get('/', authenticateJWT, customerController.getCustomers);
+router.get("/", authenticateJWT, customerController.getCustomers);
 
 // GET /api/customers/:id - Get a single customer by ID
-router.get('/:id', authenticateJWT, customerController.getCustomerById);
+router.get("/:id", authenticateJWT, customerController.getCustomerById);
 
 // PUT /api/customers/:id - Update a customer
-router.put('/:id', authenticateJWT, validateCustomer, customerController.updateCustomer);
+router.put(
+  "/:id",
+  authenticateJWT,
+  validateCustomer,
+  customerController.updateCustomer
+);
 
 // DELETE /api/customers/:id - Delete a customer
-router.delete('/:id', authenticateJWT, customerController.deleteCustomer);
+router.delete("/:id", authenticateJWT, customerController.deleteCustomer);
 
 module.exports = router;

@@ -1,0 +1,518 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Xeno Mini CRM API",
+    "description": "API documentation for the Xeno Mini CRM platform",
+    "version": "1.0.0"
+  },
+  "basePath": "/api",
+  "schemes": ["http", "https"],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Bearer JWT token"
+    }
+  },
+  "paths": {
+    "/customers": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get all customers",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of customers"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Customers"],
+        "summary": "Create a new customer",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "body",
+            "description": "Customer details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Customer created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "Get all orders",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of orders"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Create a new order",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "order",
+            "in": "body",
+            "description": "Order details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Order"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Order created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "tags": ["Campaigns"],
+        "summary": "Get all campaigns",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of campaigns"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Campaigns"],
+        "summary": "Create a new campaign",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "body",
+            "description": "Campaign details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Campaign"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Campaign created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "tags": ["Campaigns"],
+        "summary": "Get a single campaign by ID",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Campaign ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign details"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/activate": {
+      "post": {
+        "tags": ["Campaigns"],
+        "summary": "Activate a campaign to send messages",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Campaign ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign activated"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/stats": {
+      "get": {
+        "tags": ["Campaigns"],
+        "summary": "Get campaign delivery statistics",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Campaign ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign statistics"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns/audience/preview": {
+      "post": {
+        "tags": ["Campaigns"],
+        "summary": "Preview audience size for campaign rules",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Campaign rules",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Rules"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audience size preview"
+          },
+          "400": {
+            "description": "Invalid rules"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/receipt": {
+      "post": {
+        "tags": ["Campaigns"],
+        "summary": "Delivery receipt callback for vendor API",
+        "parameters": [
+          {
+            "name": "receipt",
+            "in": "body",
+            "description": "Message delivery receipt",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Receipt"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Receipt processed successfully"
+          },
+          "404": {
+            "description": "Communication log not found"
+          },
+          "400": {
+            "description": "Invalid receipt data"
+          }
+        }
+      }
+    },
+    "/ai/convert-rules": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Convert natural language to segment rules",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "description",
+            "in": "body",
+            "description": "Natural language segment description",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Converted rules"
+          },
+          "400": {
+            "description": "Invalid description"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "AI conversion failed"
+          }
+        }
+      }
+    },
+    "/ai/generate-message": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Generate promotional message based on campaign goal",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "goal",
+            "in": "body",
+            "description": "Campaign goal",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "goal": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated message"
+          },
+          "400": {
+            "description": "Invalid goal"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "AI generation failed"
+          }
+        }
+      }
+    },
+    "/auth/google": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Initiate Google OAuth login",
+        "responses": {
+          "302": {
+            "description": "Redirect to Google OAuth"
+          }
+        }
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Google OAuth callback",
+        "responses": {
+          "302": {
+            "description": "Redirect with JWT token"
+          },
+          "401": {
+            "description": "Authentication failed"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Customer": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "totalSpend": {
+          "type": "number"
+        },
+        "visits": {
+          "type": "number"
+        },
+        "lastActivity": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Order": {
+      "type": "object",
+      "required": ["customer", "amount", "products"],
+      "properties": {
+        "customer": {
+          "type": "string",
+          "description": "Customer ID"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          }
+        },
+        "orderDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed", "cancelled"]
+        }
+      }
+    },
+    "Product": {
+      "type": "object",
+      "required": ["name", "price", "quantity"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "quantity": {
+          "type": "number"
+        }
+      }
+    },
+    "Campaign": {
+      "type": "object",
+      "required": ["name", "rules", "message"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "rules": {
+          "$ref": "#/definitions/Rules"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "Rules": {
+      "type": "object",
+      "required": ["conditions", "condition"],
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Condition"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "enum": ["AND", "OR"]
+        }
+      }
+    },
+    "Condition": {
+      "type": "object",
+      "required": ["field", "operator", "value"],
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string",
+          "enum": [">", "<", ">=", "<=", "=", "!=", "contains"]
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Receipt": {
+      "type": "object",
+      "required": ["communicationId", "status"],
+      "properties": {
+        "communicationId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["sent", "failed"]
+        },
+        "failureReason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

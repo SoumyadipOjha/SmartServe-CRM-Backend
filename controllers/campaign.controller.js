@@ -1,218 +1,164 @@
-const Campaign = require('../models/campaign.model');
-const Customer = require('../models/customer.model');
-const CommunicationLog = require('../models/communication-log.model');
-const vendorService = require('../services/vendor.service');
+'use strict';
 
-// Create a new campaign
+const Campaign         = require('../models/campaign.model');
+const Customer         = require('../models/customer.model');
+const CommunicationLog = require('../models/communication-log.model');
+const { buildQueryFromRules } = require('../services/query-builder.service');
+const campaignQueue    = require('../services/campaign-queue.service');
+const logger           = require('../utils/logger');
+
+function serverError(res, err, label = 'Server error') {
+    logger.error({ err: err.message }, `[campaign] ${label}`);
+    return res.status(500).json({ message: 'Internal server error' });
+}
+
 exports.createCampaign = async (req, res) => {
     try {
-        const { name, description, rules, message } = req.body;
-        
+        const { name, description, rules, message, isAbTest, variantBMessage } = req.body;
+
         const campaign = new Campaign({
             name,
             description,
             rules,
             message,
-            createdBy: req.user.id
+            isAbTest: !!isAbTest,
+            createdBy: req.user.id,
         });
-        
+
+        if (isAbTest && variantBMessage) {
+            campaign.variants = [
+                { label: 'A', message, audienceSize: 0, deliveryStats: { sent: 0, failed: 0 } },
+                { label: 'B', message: variantBMessage, audienceSize: 0, deliveryStats: { sent: 0, failed: 0 } },
+            ];
+        }
+
         await campaign.save();
         res.status(201).json({ message: 'Campaign created successfully', campaign });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+    } catch (err) {
+        return serverError(res, err, 'createCampaign');
     }
 };
 
-// Get all campaigns
 exports.getCampaigns = async (req, res) => {
     try {
-        const campaigns = await Campaign.find({}).sort({ createdAt: -1 });
-        res.status(200).json({ campaigns });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        const page  = Math.max(1, parseInt(req.query.page)  || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+        const skip  = (page - 1) * limit;
+
+        const [campaigns, total] = await Promise.all([
+            Campaign.find({ createdBy: req.user.id }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Campaign.countDocuments({ createdBy: req.user.id }),
+        ]);
+
+        res.status(200).json({
+            campaigns,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+        });
+    } catch (err) {
+        return serverError(res, err, 'getCampaigns');
     }
 };
 
-// Get a single campaign by ID
 exports.getCampaignById = async (req, res) => {
     try {
-        const campaign = await Campaign.findById(req.params.id);
-        
-        if (!campaign) {
-            return res.status(404).json({ message: 'Campaign not found' });
-        }
-        
+        const campaign = await Campaign.findOne({ _id: req.params.id, createdBy: req.user.id });
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
         res.status(200).json({ campaign });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+    } catch (err) {
+        return serverError(res, err, 'getCampaignById');
     }
 };
 
-// Preview audience for a campaign
 exports.previewCampaignAudience = async (req, res) => {
     try {
         const { rules } = req.body;
-        
-        // Build MongoDB query based on rules
+
         const query = buildQueryFromRules(rules);
-        
-        // Count matching customers
-        const audienceCount = await Customer.countDocuments(query);
-        
-        res.status(200).json({ audienceCount });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+
+        const [audienceCount, audience] = await Promise.all([
+            Customer.countDocuments(query),
+            Customer.find(query, { name: 1, email: 1 }).limit(100).lean(),
+        ]);
+
+        res.status(200).json({ audienceCount, audience });
+    } catch (err) {
+        return serverError(res, err, 'previewCampaignAudience');
     }
 };
 
-// Activate a campaign and send messages
 exports.activateCampaign = async (req, res) => {
     try {
-        const campaignId = req.params.id;
-        const campaign = await Campaign.findById(campaignId);
-        
-        if (!campaign) {
-            return res.status(404).json({ message: 'Campaign not found' });
+        const campaign = await Campaign.findOne({ _id: req.params.id, createdBy: req.user.id });
+
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+        if (campaign.status !== 'draft') {
+            return res.status(400).json({ message: `Campaign is already ${campaign.status}` });
         }
-        
-        // Find matching audience
-        const query = buildQueryFromRules(campaign.rules);
-        const audience = await Customer.find(query);
-        
-        // Update campaign with audience info
-        campaign.audience = audience.map(customer => customer._id);
-        campaign.audienceSize = audience.length;
-        campaign.status = 'active';
+
+        campaign.status = 'queued';
         await campaign.save();
-        
-        // Send messages to audience
-        for (const customer of audience) {
-            // Create personalized message using template
-            const personalizedMessage = campaign.message.replace('{{name}}', customer.name);
-            
-            // Create communication log entry
-            const commLog = new CommunicationLog({
-                campaign: campaign._id,
-                customer: customer._id,
-                message: personalizedMessage,
-                status: 'pending'
-            });
-            
-            await commLog.save();
-            
-            // Send message via vendor service (async)
-            vendorService.sendMessage(commLog._id, customer.phone || customer.email, personalizedMessage);
-        }
-        
-        res.status(200).json({ 
-            message: 'Campaign activated successfully', 
-            audienceSize: audience.length 
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+
+        const jobId = campaignQueue.enqueue(req.params.id);
+        res.status(202).json({ message: 'Campaign queued for delivery', jobId, campaignId: req.params.id });
+    } catch (err) {
+        return serverError(res, err, 'activateCampaign');
     }
 };
 
-// Receipt callback for vendor delivery
-exports.deliveryReceipt = async (req, res) => {
+exports.getCampaignJobStatus = async (req, res) => {
     try {
-        const { communicationId, status, failureReason } = req.body;
-        
-        const commLog = await CommunicationLog.findById(communicationId);
-        
-        if (!commLog) {
-            return res.status(404).json({ message: 'Communication log not found' });
-        }
-        
-        // Update communication log
-        commLog.status = status;
-        if (failureReason) {
-            commLog.failureReason = failureReason;
-        }
-        await commLog.save();
-        
-        // Update campaign stats
-        const campaign = await Campaign.findById(commLog.campaign);
-        
-        if (status === 'sent') {
-            campaign.deliveryStats.sent += 1;
-        } else if (status === 'failed') {
-            campaign.deliveryStats.failed += 1;
-        }
-        
-        await campaign.save();
-        
-        res.status(200).json({ message: 'Receipt processed successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        const job = campaignQueue.getJobByCampaignId(req.params.id);
+        if (!job) return res.status(404).json({ message: 'No active job found for this campaign' });
+        res.json({ job });
+    } catch (err) {
+        return serverError(res, err, 'getCampaignJobStatus');
     }
 };
 
-// Get latest campaign statistics
 exports.getCampaignStats = async (req, res) => {
     try {
-        const campaignId = req.params.id;
-        
-        // Use aggregation to get the latest stats directly from communication logs
-        const campaign = await Campaign.findById(campaignId);
-        
-        if (!campaign) {
-            return res.status(404).json({ message: 'Campaign not found' });
-        }
-        
-        // Get real-time counts from communication logs
-        const [sentCount, failedCount] = await Promise.all([
-            CommunicationLog.countDocuments({ campaign: campaignId, status: 'sent' }),
-            CommunicationLog.countDocuments({ campaign: campaignId, status: 'failed' })
+        const campaign = await Campaign.findOne({ _id: req.params.id, createdBy: req.user.id });
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        const [sentCount, openedCount, failedCount] = await Promise.all([
+            CommunicationLog.countDocuments({ campaign: req.params.id, status: 'sent'   }),
+            CommunicationLog.countDocuments({ campaign: req.params.id, status: 'opened' }),
+            CommunicationLog.countDocuments({ campaign: req.params.id, status: 'failed' }),
         ]);
-        
-        // Return the stats - use actual count from logs rather than cached values
-        res.status(200).json({ 
+
+        let variantStats = null;
+        if (campaign.isAbTest) {
+            const rows = await CommunicationLog.aggregate([
+                { $match: { campaign: campaign._id, variant: { $in: ['A', 'B'] } } },
+                { $group: { _id: { variant: '$variant', status: '$status' }, n: { $sum: 1 } } },
+            ]);
+            const vMap = {
+                A: { sent: 0, opened: 0, failed: 0 },
+                B: { sent: 0, opened: 0, failed: 0 },
+            };
+            for (const r of rows) {
+                const v = r._id.variant;
+                if (['sent', 'opened', 'failed'].includes(r._id.status) && vMap[v]) {
+                    vMap[v][r._id.status] = r.n;
+                }
+            }
+            variantStats = [
+                { label: 'A', audienceSize: campaign.variants?.[0]?.audienceSize ?? 0, ...vMap.A },
+                { label: 'B', audienceSize: campaign.variants?.[1]?.audienceSize ?? 0, ...vMap.B },
+            ];
+        }
+
+        res.status(200).json({
             stats: {
                 sent: sentCount,
+                opened: openedCount,
                 failed: failedCount,
-                audienceSize: campaign.audienceSize
-            } 
+                audienceSize: campaign.audienceSize,
+                isAbTest: campaign.isAbTest,
+                variants: variantStats,
+            },
         });
-    } catch (error) {
-        console.error('Error fetching campaign stats:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+    } catch (err) {
+        return serverError(res, err, 'getCampaignStats');
     }
 };
-
-// Helper function to build MongoDB query from rules
-function buildQueryFromRules(rules) {
-    const { conditions, condition } = rules;
-    
-    // Create an array of MongoDB conditions
-    const mongoConditions = conditions.map(rule => {
-        const { field, operator, value } = rule;
-        
-        // Map operators to MongoDB operators
-        const operatorMap = {
-            '>': '$gt',
-            '<': '$lt',
-            '>=': '$gte',
-            '<=': '$lte',
-            '=': '$eq',
-            '!=': '$ne',
-            'contains': '$regex'
-        };
-        
-        const mongoOperator = operatorMap[operator];
-        
-        // Special case for contains operator
-        if (operator === 'contains') {
-            return { [field]: { [mongoOperator]: value, $options: 'i' } };
-        }
-        
-        return { [field]: { [mongoOperator]: value } };
-    });
-    
-    // Combine conditions with AND or OR
-    if (condition === 'AND') {
-        return { $and: mongoConditions };
-    } else {
-        return { $or: mongoConditions };
-    }
-}

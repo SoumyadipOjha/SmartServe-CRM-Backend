@@ -30,6 +30,10 @@ const customerSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    emailOptOut: {
+      type: Boolean,
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -43,5 +47,10 @@ const customerSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+customerSchema.index({ totalSpend: -1 });
+customerSchema.index({ visits: -1 });
+customerSchema.index({ lastActivity: -1 });
+customerSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Customer", customerSchema);

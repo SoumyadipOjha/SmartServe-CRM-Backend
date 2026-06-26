@@ -4,11 +4,9 @@ const { body, validationResult } = require('express-validator');
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log('Validation errors:', JSON.stringify(errors.array(), null, 2));
-        return res.status(400).json({ 
+        return res.status(400).json({
             message: 'Validation failed',
-            errors: errors.array(),
-            requestBody: Object.keys(req.body) // Log keys to help debug missing fields
+            errors: errors.array().map(e => ({ field: e.path, message: e.msg })),
         });
     }
     next();
@@ -24,12 +22,12 @@ const validateCustomer = [
 
 // Order validation rules
 const validateOrder = [
-    body('customer').notEmpty().withMessage('Customer ID is required'),
-    body('amount').isNumeric().withMessage('Amount must be a number'),
-    body('products').isArray().withMessage('Products must be an array'),
+    body('customer').notEmpty().withMessage('Customer ID is required').isMongoId().withMessage('Invalid customer ID'),
+    body('amount').isFloat({ min: 0.01, max: 1_000_000 }).withMessage('Amount must be a positive number'),
+    body('products').isArray({ min: 1 }).withMessage('Products must be a non-empty array'),
     body('products.*.name').notEmpty().withMessage('Product name is required'),
-    body('products.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
-    body('products.*.price').isNumeric().withMessage('Price must be a number'),
+    body('products.*.quantity').isInt({ min: 1, max: 10_000 }).withMessage('Quantity must be between 1 and 10,000'),
+    body('products.*.price').isFloat({ min: 0 }).withMessage('Price must be a non-negative number'),
     handleValidationErrors
 ];
 
@@ -66,6 +64,14 @@ const validateCampaign = [
         return true;
     }),
     
+    body('variantBMessage').custom((value, { req }) => {
+        if (req.body.isAbTest === true || req.body.isAbTest === 'true') {
+            if (!value || value.trim().length < 10) {
+                throw new Error('Variant B message is required for A/B tests (min 10 characters)');
+            }
+        }
+        return true;
+    }),
     handleValidationErrors
 ];
 

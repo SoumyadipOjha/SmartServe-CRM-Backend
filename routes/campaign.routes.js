@@ -19,6 +19,9 @@ router.post('/preview', campaignController.previewCampaignAudience);
 // GET /api/campaigns/:id/stats - Get latest campaign statistics (must be before /:id pattern)
 router.get('/:id/stats', campaignController.getCampaignStats);
 
+// GET /api/campaigns/:id/job - Get background job status for a campaign
+router.get('/:id/job', campaignController.getCampaignJobStatus);
+
 // POST /api/campaigns/:id/activate - Activate a campaign and send messages
 router.post('/:id/activate', campaignController.activateCampaign);
 

@@ -29,7 +29,7 @@ exports.createOrder = async (req, res) => {
         
         res.status(201).json({ message: 'Order created successfully', order });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -42,7 +42,7 @@ exports.getOrders = async (req, res) => {
         
         res.status(200).json({ orders });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -58,7 +58,7 @@ exports.getOrderById = async (req, res) => {
         
         res.status(200).json({ order });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -70,7 +70,7 @@ exports.getOrdersByCustomer = async (req, res) => {
             
         res.status(200).json({ orders });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -91,6 +91,6 @@ exports.updateOrderStatus = async (req, res) => {
         
         res.status(200).json({ message: 'Order status updated successfully', order });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

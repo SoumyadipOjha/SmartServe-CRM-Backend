@@ -18,6 +18,9 @@ router.post("/bulk", authenticateJWT, customerController.bulkUpload);
 // GET /api/customers - Get all customers
 router.get("/", authenticateJWT, customerController.getCustomers);
 
+// GET /api/customers/:id/profile - Full 360 profile (orders, comms, stats)
+router.get("/:id/profile", authenticateJWT, customerController.getCustomerProfile);
+
 // GET /api/customers/:id - Get a single customer by ID
 router.get("/:id", authenticateJWT, customerController.getCustomerById);
 

@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const { seedDemoData } = require('../services/seed.service');
+const logger = require('../utils/logger');
 
-// Generate JWT token for authenticated user
 exports.generateToken = (user) => {
     return jwt.sign(
         { id: user._id, email: user.email, role: user.role },
@@ -10,40 +11,56 @@ exports.generateToken = (user) => {
     );
 };
 
-// Google OAuth callback handler
 exports.googleCallback = async (req, res) => {
     try {
-        // At this point, user is already authenticated via Google OAuth
-        // and stored in req.user by Passport middleware
-        
         if (!req.user) {
-            console.error('Google auth callback: No user data available');
+            logger.warn('Google auth callback: no user data');
             return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
         }
-        
-        // Generate JWT token for the authenticated user
+
         const token = exports.generateToken(req.user);
-        
-        // Redirect to frontend with token
         res.redirect(`${process.env.CLIENT_URL}/auth/success?token=${token}`);
     } catch (error) {
-        console.error('Authentication failed:', error);
+        logger.error({ err: error.message }, 'Google auth callback error');
         res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
     }
 };
 
-// Get current user profile
+exports.demoLogin = async (req, res) => {
+    try {
+        const demoUser = await User.findOneAndUpdate(
+            { email: 'demo@flayx.app' },
+            {
+                $setOnInsert: {
+                    name: 'Demo User',
+                    email: 'demo@flayx.app',
+                    role: 'user',
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        await seedDemoData(demoUser._id);
+
+        const token = exports.generateToken(demoUser);
+        res.json({ token, user: demoUser });
+    } catch (error) {
+        logger.error({ err: error.message }, 'Demo login error');
+        res.status(500).json({ message: 'Demo login failed' });
+    }
+};
+
 exports.getCurrentUser = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-__v');
-        
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         res.status(200).json({ user });
     } catch (error) {
-        console.error('Error fetching user profile:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        logger.error({ err: error.message }, 'Get current user error');
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

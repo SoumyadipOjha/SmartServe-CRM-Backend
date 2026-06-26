@@ -56,9 +56,22 @@ const campaignSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['draft', 'active', 'completed', 'cancelled'],
+        enum: ['draft', 'queued', 'active', 'completed', 'cancelled'],
         default: 'draft'
     },
+    isAbTest: {
+        type: Boolean,
+        default: false
+    },
+    variants: [{
+        label: { type: String, enum: ['A', 'B'] },
+        message: { type: String },
+        audienceSize: { type: Number, default: 0 },
+        deliveryStats: {
+            sent:   { type: Number, default: 0 },
+            failed: { type: Number, default: 0 }
+        }
+    }],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -66,6 +79,9 @@ const campaignSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+campaignSchema.index({ createdBy: 1, createdAt: -1 });
+campaignSchema.index({ status: 1 });
 
 const Campaign = mongoose.model('Campaign', campaignSchema);
 

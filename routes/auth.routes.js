@@ -13,6 +13,9 @@ router.get('/google/callback',
     authController.googleCallback
 );
 
+// Demo login — no OAuth, returns JWT directly
+router.post('/demo', authController.demoLogin);
+
 // Get current user profile
 router.get('/me', authenticateJWT, authController.getCurrentUser);
 

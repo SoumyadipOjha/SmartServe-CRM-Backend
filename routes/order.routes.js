@@ -5,7 +5,7 @@ const { validateOrder } = require('../middleware/validation.middleware');
 const { authenticateJWT } = require('../middleware/auth.middleware');
 
 // POST /api/orders - Create a new order
-router.post('/', validateOrder, orderController.createOrder);
+router.post('/', authenticateJWT, validateOrder, orderController.createOrder);
 
 // GET /api/orders - Get all orders
 router.get('/', authenticateJWT, orderController.getOrders);

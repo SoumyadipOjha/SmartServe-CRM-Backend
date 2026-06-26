@@ -35,6 +35,11 @@ const customerSchema = new mongoose.Schema(
       default: false,
     },
     tags: [{ type: String, trim: true }],
+    customFields: {
+        type: Map,
+        of: mongoose.Schema.Types.Mixed,
+        default: {},
+    },
     notes: [{
       content: { type: String, required: true, maxlength: 2000 },
       createdAt: { type: Date, default: Date.now },

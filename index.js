@@ -36,6 +36,8 @@ const emailRoutes     = require('./routes/email.routes');
 const webhookRoutes      = require('./routes/webhook.routes');
 const taskRoutes         = require('./routes/task.routes');
 const tasksGlobalRoutes  = require('./routes/tasks-global.routes');
+const dealRoutes         = require('./routes/deal.routes');
+const customFieldRoutes  = require('./routes/custom-field.routes');
 const campaignScheduler  = require('./services/campaign-scheduler.service');
 
 // Import error middleware
@@ -144,6 +146,8 @@ app.use('/api/email',     emailRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/customers/:customerId/tasks', taskRoutes);
 app.use('/api/tasks', tasksGlobalRoutes);
+app.use('/api/deals', dealRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
 
 app.use('/api/email/test', emailLimiter);
 

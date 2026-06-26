@@ -153,19 +153,11 @@ app.use('/api/email',     emailRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/customers/:customerId/tasks', taskRoutes);
 app.use('/api/tasks', tasksGlobalRoutes);
-<<<<<<< HEAD
-app.use('/api/deals', dealRoutes);
-app.use('/api/custom-fields', customFieldRoutes);
-=======
-<<<<<<< Updated upstream
-=======
 app.use('/api/deals', dealRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 app.use('/api/lead-forms', leadFormRoutes);
 app.use('/api/sequences', authenticateJWT, sequenceRoutes);
 app.use('/api/team', teamRoutes);
->>>>>>> Stashed changes
->>>>>>> chore/integration
 
 app.use('/api/email/test', emailLimiter);
 

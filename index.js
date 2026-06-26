@@ -36,7 +36,13 @@ const emailRoutes     = require('./routes/email.routes');
 const webhookRoutes      = require('./routes/webhook.routes');
 const taskRoutes         = require('./routes/task.routes');
 const tasksGlobalRoutes  = require('./routes/tasks-global.routes');
-const campaignScheduler  = require('./services/campaign-scheduler.service');
+const dealRoutes         = require('./routes/deal.routes');
+const customFieldRoutes     = require('./routes/custom-field.routes');
+const leadFormRoutes        = require('./routes/lead-form.routes');
+const sequenceRoutes        = require('./routes/sequence.routes');
+const teamRoutes            = require('./routes/team.routes');
+const campaignScheduler     = require('./services/campaign-scheduler.service');
+const sequenceScheduler     = require('./services/sequence-scheduler.service');
 
 // Import error middleware
 const errorHandler = require('./middleware/error.middleware');
@@ -144,6 +150,14 @@ app.use('/api/email',     emailRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/customers/:customerId/tasks', taskRoutes);
 app.use('/api/tasks', tasksGlobalRoutes);
+<<<<<<< Updated upstream
+=======
+app.use('/api/deals', dealRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
+app.use('/api/lead-forms', leadFormRoutes);
+app.use('/api/sequences', authenticateJWT, sequenceRoutes);
+app.use('/api/team', teamRoutes);
+>>>>>>> Stashed changes
 
 app.use('/api/email/test', emailLimiter);
 
@@ -166,6 +180,7 @@ mongoose
             logger.info({ port: PORT }, 'Server started');
         });
         campaignScheduler.start();
+        sequenceScheduler.start();
     })
     .catch((error) => {
         logger.error({ err: error }, 'MongoDB connection error');
@@ -177,6 +192,7 @@ function shutdown(signal) {
     logger.info({ signal }, 'Shutdown signal received');
     if (!server) process.exit(0);
     campaignScheduler.stop();
+    sequenceScheduler.stop();
     server.close(() => {
         mongoose.connection.close(false, () => {
             logger.info('Graceful shutdown complete');

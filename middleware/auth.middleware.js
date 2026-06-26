@@ -15,7 +15,13 @@ const authenticateJWT = (req, res, next) => {
         }
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+        req.user = {
+            ...decoded,
+            // For team members, route data queries through the owner's ID.
+            // ownId preserves the actual user for audit purposes.
+            ownId: decoded.id,
+            id:    decoded.orgId || decoded.id,
+        };
         next();
     } catch {
         res.status(401).json({ message: 'Invalid or expired token' });

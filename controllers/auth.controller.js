@@ -4,8 +4,17 @@ const { seedDemoData } = require('../services/seed.service');
 const logger = require('../utils/logger');
 
 exports.generateToken = (user) => {
+    // orgId: the account owner whose data this user can access.
+    // For owners it's their own _id; for team members it's their owner's _id.
+    const orgId = user.organizationOwner ? user.organizationOwner.toString() : user._id.toString();
     return jwt.sign(
-        { id: user._id, email: user.email, role: user.role },
+        {
+            id:       user._id,
+            email:    user.email,
+            role:     user.role,
+            teamRole: user.teamRole || 'owner',
+            orgId,
+        },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
     );

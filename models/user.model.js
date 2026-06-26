@@ -24,9 +24,21 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['admin', 'user'],
         default: 'user'
-    }
+    },
+    // Team / multi-user support
+    teamRole: {
+        type: String,
+        enum: ['owner', 'admin', 'member'],
+        default: 'owner',
+    },
+    // For team members, points to the account owner whose data they share
+    organizationOwner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+    },
 }, {
-    timestamps: true
+    timestamps: true,
 });
 
 // Method to check if a password matches the user's password

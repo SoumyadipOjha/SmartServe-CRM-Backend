@@ -1,3 +1,4 @@
+const crypto      = require('crypto');
 const User        = require('../models/user.model');
 const TeamInvite  = require('../models/team-invite.model');
 const emailService = require('../services/email.service');
@@ -58,10 +59,12 @@ exports.inviteMember = [requireOwnerOrAdmin, async (req, res) => {
       }
     }
 
-    // Upsert invite (re-send if already pending)
+    // Upsert invite (re-send if already pending).
+    // Generate token here so $setOnInsert can include it — pre('save') doesn't run on findOneAndUpdate.
+    const freshToken = crypto.randomBytes(24).toString('hex');
     const invite = await TeamInvite.findOneAndUpdate(
       { invitedBy: req.user.id, email: email.toLowerCase(), accepted: false },
-      { teamRole, $setOnInsert: { invitedBy: req.user.id, email: email.toLowerCase() } },
+      { teamRole, $setOnInsert: { invitedBy: req.user.id, email: email.toLowerCase(), token: freshToken } },
       { upsert: true, new: true },
     );
 

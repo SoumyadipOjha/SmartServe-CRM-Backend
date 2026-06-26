@@ -52,16 +52,51 @@ exports.getCustomerById = async (req, res) => {
 
 exports.updateCustomer = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, tags } = req.body;
+    const update = { name, email, phone, updatedAt: new Date() };
+    if (Array.isArray(tags)) update.tags = tags.map(t => String(t).trim().toLowerCase()).filter(Boolean);
 
     const customer = await Customer.findByIdAndUpdate(
       req.params.id,
-      { name, email, phone, updatedAt: new Date() },
+      update,
       { new: true, runValidators: true }
     );
 
     if (!customer) return res.status(404).json({ message: "Customer not found" });
     res.status(200).json({ message: "Customer updated successfully", customer });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.addNote = async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ message: 'Note content is required' });
+
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { $push: { notes: { content: content.trim() } } },
+      { new: true }
+    );
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+    const note = customer.notes[customer.notes.length - 1];
+    res.status(201).json({ note });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.deleteNote = async (req, res) => {
+  try {
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { notes: { _id: req.params.noteId } } },
+      { new: true }
+    );
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.status(200).json({ message: 'Note deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }

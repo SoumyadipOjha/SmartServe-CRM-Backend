@@ -34,6 +34,11 @@ const customerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    tags: [{ type: String, trim: true }],
+    notes: [{
+      content: { type: String, required: true, maxlength: 2000 },
+      createdAt: { type: Date, default: Date.now },
+    }],
     createdAt: {
       type: Date,
       default: Date.now,

@@ -35,4 +35,10 @@ router.put(
 // DELETE /api/customers/:id - Delete a customer
 router.delete("/:id", authenticateJWT, customerController.deleteCustomer);
 
+// POST /api/customers/:id/notes - Add a note
+router.post("/:id/notes", authenticateJWT, customerController.addNote);
+
+// DELETE /api/customers/:id/notes/:noteId - Delete a note
+router.delete("/:id/notes/:noteId", authenticateJWT, customerController.deleteNote);
+
 module.exports = router;

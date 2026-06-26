@@ -14,7 +14,7 @@ function serverError(res, err, label = 'Server error') {
 
 exports.createCampaign = async (req, res) => {
     try {
-        const { name, description, rules, message, isAbTest, variantBMessage } = req.body;
+        const { name, description, rules, message, isAbTest, variantBMessage, scheduledAt } = req.body;
 
         const campaign = new Campaign({
             name,
@@ -23,6 +23,7 @@ exports.createCampaign = async (req, res) => {
             message,
             isAbTest: !!isAbTest,
             createdBy: req.user.id,
+            scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         });
 
         if (isAbTest && variantBMessage) {
@@ -93,6 +94,15 @@ exports.activateCampaign = async (req, res) => {
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
         if (campaign.status !== 'draft') {
             return res.status(400).json({ message: `Campaign is already ${campaign.status}` });
+        }
+
+        // If scheduledAt is in the future, don't queue yet — scheduler will pick it up
+        if (campaign.scheduledAt && campaign.scheduledAt > new Date()) {
+            return res.status(202).json({
+                message: 'Campaign scheduled',
+                scheduledAt: campaign.scheduledAt,
+                campaignId: campaign._id,
+            });
         }
 
         campaign.status = 'queued';

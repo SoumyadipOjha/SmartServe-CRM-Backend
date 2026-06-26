@@ -72,6 +72,10 @@ const campaignSchema = new mongoose.Schema({
             failed: { type: Number, default: 0 }
         }
     }],
+    scheduledAt: {
+        type: Date,
+        default: null,
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

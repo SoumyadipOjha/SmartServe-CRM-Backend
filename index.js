@@ -33,6 +33,10 @@ const aiRoutes        = require('./routes/ai.routes');
 const segmentRoutes   = require('./routes/segment.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const emailRoutes     = require('./routes/email.routes');
+const webhookRoutes      = require('./routes/webhook.routes');
+const taskRoutes         = require('./routes/task.routes');
+const tasksGlobalRoutes  = require('./routes/tasks-global.routes');
+const campaignScheduler  = require('./services/campaign-scheduler.service');
 
 // Import error middleware
 const errorHandler = require('./middleware/error.middleware');
@@ -137,6 +141,9 @@ app.use('/api/ai',        aiLimiter, aiRoutes);
 app.use('/api/segments',  segmentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/email',     emailRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/customers/:customerId/tasks', taskRoutes);
+app.use('/api/tasks', tasksGlobalRoutes);
 
 app.use('/api/email/test', emailLimiter);
 
@@ -158,6 +165,7 @@ mongoose
         server = app.listen(PORT, () => {
             logger.info({ port: PORT }, 'Server started');
         });
+        campaignScheduler.start();
     })
     .catch((error) => {
         logger.error({ err: error }, 'MongoDB connection error');
@@ -168,6 +176,7 @@ mongoose
 function shutdown(signal) {
     logger.info({ signal }, 'Shutdown signal received');
     if (!server) process.exit(0);
+    campaignScheduler.stop();
     server.close(() => {
         mongoose.connection.close(false, () => {
             logger.info('Graceful shutdown complete');

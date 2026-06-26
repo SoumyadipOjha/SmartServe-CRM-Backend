@@ -25,6 +25,10 @@ const vendorService = {
             });
 
             status = 'sent';
+            // Store Resend's email ID so webhooks can look up this log
+            if (result.messageId) {
+                await CommunicationLog.findByIdAndUpdate(communicationId, { resendId: result.messageId });
+            }
             logger.info({ to: customer.email, messageId: result.messageId }, 'Email sent');
         } catch (err) {
             failureReason = err.message;

@@ -34,7 +34,14 @@ const communicationLogSchema = new mongoose.Schema({
     },
     openedAt: {
         type: Date
-    }
+    },
+    clickedAt: {
+        type: Date
+    },
+    resendId: {
+        type: String,
+        index: true,
+    },
 }, {
     timestamps: true
 });

@@ -52,6 +52,9 @@ const { authenticateJWT } = require('./middleware/auth.middleware');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse-proxy headers (Render, Railway, etc.) so rate-limit can read real client IP
+app.set('trust proxy', 1);
+
 // Configure passport
 require('./config/passport');
 
@@ -199,10 +202,9 @@ function shutdown(signal) {
     campaignScheduler.stop();
     sequenceScheduler.stop();
     server.close(() => {
-        mongoose.connection.close(false, () => {
-            logger.info('Graceful shutdown complete');
-            process.exit(0);
-        });
+        mongoose.connection.close()
+            .then(() => { logger.info('Graceful shutdown complete'); process.exit(0); })
+            .catch(() => process.exit(1));
     });
     // Force-kill if still running after 10 s
     setTimeout(() => {

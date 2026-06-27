@@ -26,32 +26,64 @@ Node.js + Express 5 REST API for Flayx CRM. Handles authentication, customer/ord
 
 ## Project Structure
 
+Feature-module layout: each domain owns its controller, routes, and feature-specific services in one place.
+
 ```
 SmartServe-CRM-Backend/
-├── config/
-│   └── passport.js              # Google OAuth strategy
-├── controllers/
-│   ├── auth.controller.js       # Login, register, demo, Google OAuth, generateToken
-│   ├── customer.controller.js
-│   ├── order.controller.js
-│   ├── campaign.controller.js
-│   ├── segment.controller.js
-│   ├── deal.controller.js
-│   ├── sequence.controller.js
-│   ├── lead-form.controller.js
-│   ├── custom-field.controller.js
-│   ├── team.controller.js       # Invite, accept, RBAC
-│   ├── task.controller.js
-│   ├── analytics.controller.js
-│   ├── ai.controller.js
-│   ├── email.controller.js
-│   └── webhook.controller.js
-├── middleware/
-│   ├── auth.middleware.js        # JWT decode; req.user.id = orgId || id
-│   ├── error.middleware.js
-│   └── validation.middleware.js
-├── models/
-│   ├── user.model.js             # organizationOwner, teamRole fields
+├── modules/                       # Feature modules — co-located controller + routes + services
+│   ├── ai/
+│   │   ├── ai.controller.js
+│   │   ├── ai.routes.js
+│   │   └── ai.service.js
+│   ├── analytics/
+│   │   ├── analytics.controller.js
+│   │   ├── analytics.routes.js
+│   │   └── analytics-sse.service.js
+│   ├── auth/
+│   │   ├── auth.controller.js     # Login, register, demo, Google OAuth, generateToken
+│   │   └── auth.routes.js
+│   ├── campaigns/
+│   │   ├── campaign.controller.js
+│   │   ├── campaign.routes.js
+│   │   ├── campaign-scheduler.service.js
+│   │   └── campaign-queue.service.js
+│   ├── customers/
+│   │   ├── customer.controller.js
+│   │   └── customer.routes.js
+│   ├── email/
+│   │   ├── email.controller.js
+│   │   ├── email.routes.js
+│   │   └── email.service.js       # Resend — invite + campaign emails
+│   ├── lead-forms/
+│   │   ├── lead-form.controller.js
+│   │   └── lead-form.routes.js
+│   ├── orders/
+│   │   ├── order.controller.js
+│   │   └── order.routes.js
+│   ├── pipeline/
+│   │   ├── deal.controller.js
+│   │   ├── deal.routes.js
+│   │   ├── custom-field.controller.js
+│   │   └── custom-field.routes.js
+│   ├── segments/
+│   │   ├── segment.controller.js
+│   │   └── segment.routes.js
+│   ├── sequences/
+│   │   ├── sequence.controller.js
+│   │   ├── sequence.routes.js
+│   │   └── sequence-scheduler.service.js
+│   ├── tasks/
+│   │   ├── task.controller.js
+│   │   ├── task.routes.js
+│   │   └── tasks-global.routes.js
+│   ├── team/
+│   │   ├── team.controller.js     # Invite, accept, RBAC
+│   │   └── team.routes.js
+│   └── webhooks/
+│       ├── webhook.controller.js
+│       └── webhook.routes.js
+├── models/                        # Shared Mongoose models (12 total)
+│   ├── user.model.js              # organizationOwner, teamRole fields
 │   ├── customer.model.js
 │   ├── order.model.js
 │   ├── campaign.model.js
@@ -60,19 +92,24 @@ SmartServe-CRM-Backend/
 │   ├── sequence.model.js
 │   ├── lead-form.model.js
 │   ├── custom-field.model.js
-│   ├── team-invite.model.js      # token, expiresAt, accepted
+│   ├── team-invite.model.js       # token, expiresAt, accepted
 │   ├── task.model.js
 │   └── communication-log.model.js
-├── routes/                       # One file per resource
-├── services/
-│   ├── email.service.js          # Resend — invite + campaign emails
-│   ├── campaign-scheduler.service.js
-│   └── sequence-scheduler.service.js
+├── services/                      # Shared/utility services (cross-domain)
+│   ├── vendor.service.js          # Delivery orchestration — sends emails, updates stats
+│   ├── query-builder.service.js
+│   └── seed.service.js
+├── config/
+│   └── passport.js                # Google OAuth strategy
+├── middleware/
+│   ├── auth.middleware.js          # JWT decode; req.user.id = orgId || id
+│   ├── error.middleware.js
+│   └── validation.middleware.js
 ├── utils/
-│   ├── logger.js                 # Pino instance
-│   └── validateEnv.js            # Fails fast if required env vars are missing
+│   ├── logger.js                  # Pino instance
+│   └── validateEnv.js             # Fails fast if required env vars are missing
 ├── swagger.json
-├── index.js                      # App entry point, all route registrations
+├── index.js                       # App entry point, all route registrations
 └── package.json
 ```
 

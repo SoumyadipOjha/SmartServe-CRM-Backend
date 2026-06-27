@@ -25,24 +25,24 @@ dotenv.config();
 require('./utils/validateEnv')();
 
 // Import routes
-const customerRoutes  = require('./routes/customer.routes');
-const orderRoutes     = require('./routes/order.routes');
-const campaignRoutes  = require('./routes/campaign.routes');
-const authRoutes      = require('./routes/auth.routes');
-const aiRoutes        = require('./routes/ai.routes');
-const segmentRoutes   = require('./routes/segment.routes');
-const analyticsRoutes = require('./routes/analytics.routes');
-const emailRoutes     = require('./routes/email.routes');
-const webhookRoutes      = require('./routes/webhook.routes');
-const taskRoutes         = require('./routes/task.routes');
-const tasksGlobalRoutes  = require('./routes/tasks-global.routes');
-const dealRoutes         = require('./routes/deal.routes');
-const customFieldRoutes     = require('./routes/custom-field.routes');
-const leadFormRoutes        = require('./routes/lead-form.routes');
-const sequenceRoutes        = require('./routes/sequence.routes');
-const teamRoutes            = require('./routes/team.routes');
-const campaignScheduler     = require('./services/campaign-scheduler.service');
-const sequenceScheduler     = require('./services/sequence-scheduler.service');
+const customerRoutes  = require('./modules/customers/customer.routes');
+const orderRoutes     = require('./modules/orders/order.routes');
+const campaignRoutes  = require('./modules/campaigns/campaign.routes');
+const authRoutes      = require('./modules/auth/auth.routes');
+const aiRoutes        = require('./modules/ai/ai.routes');
+const segmentRoutes   = require('./modules/segments/segment.routes');
+const analyticsRoutes = require('./modules/analytics/analytics.routes');
+const emailRoutes     = require('./modules/email/email.routes');
+const webhookRoutes      = require('./modules/webhooks/webhook.routes');
+const taskRoutes         = require('./modules/tasks/task.routes');
+const tasksGlobalRoutes  = require('./modules/tasks/tasks-global.routes');
+const dealRoutes         = require('./modules/pipeline/deal.routes');
+const customFieldRoutes     = require('./modules/pipeline/custom-field.routes');
+const leadFormRoutes        = require('./modules/lead-forms/lead-form.routes');
+const sequenceRoutes        = require('./modules/sequences/sequence.routes');
+const teamRoutes            = require('./modules/team/team.routes');
+const campaignScheduler     = require('./modules/campaigns/campaign-scheduler.service');
+const sequenceScheduler     = require('./modules/sequences/sequence-scheduler.service');
 
 // Import error middleware
 const errorHandler = require('./middleware/error.middleware');

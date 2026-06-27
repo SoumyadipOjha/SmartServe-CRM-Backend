@@ -2,8 +2,8 @@
 
 const CommunicationLog = require('../models/communication-log.model');
 const Campaign         = require('../models/campaign.model');
-const emailService     = require('./email.service');
-const { makeUnsubToken } = require('../controllers/email.controller');
+const emailService     = require('../modules/email/email.service');
+const { makeUnsubToken } = require('../modules/email/email.controller');
 const logger           = require('../utils/logger');
 
 const vendorService = {

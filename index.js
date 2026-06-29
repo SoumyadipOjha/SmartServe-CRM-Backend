@@ -43,6 +43,7 @@ const sequenceRoutes        = require('./modules/sequences/sequence.routes');
 const teamRoutes            = require('./modules/team/team.routes');
 const campaignScheduler     = require('./modules/campaigns/campaign-scheduler.service');
 const sequenceScheduler     = require('./modules/sequences/sequence-scheduler.service');
+const taskReminderScheduler = require('./modules/tasks/task-reminder.service');
 
 // Import error middleware
 const errorHandler = require('./middleware/error.middleware');
@@ -181,6 +182,7 @@ mongoose
         });
         campaignScheduler.start();
         sequenceScheduler.start();
+        taskReminderScheduler.start();
     })
     .catch((error) => {
         logger.error({ err: error }, 'MongoDB connection error');
@@ -193,6 +195,7 @@ function shutdown(signal) {
     if (!server) process.exit(0);
     campaignScheduler.stop();
     sequenceScheduler.stop();
+    taskReminderScheduler.stop();
     server.close(() => {
         mongoose.connection.close()
             .then(() => { logger.info('Graceful shutdown complete'); process.exit(0); })

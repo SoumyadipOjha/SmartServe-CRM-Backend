@@ -67,9 +67,14 @@ app.use(helmet({
 }));
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
-    .split(',')
-    .map(o => o.trim());
+const PRODUCTION_ORIGINS = [
+    'https://smart-serve-crm.vercel.app',
+];
+
+const allowedOrigins = [
+    ...(process.env.CLIENT_URL || '').split(',').map(o => o.trim()).filter(Boolean),
+    ...PRODUCTION_ORIGINS,
+];
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -79,6 +84,7 @@ app.use(cors({
             return callback(null, true);
         }
         if (allowedOrigins.includes(origin)) return callback(null, true);
+        logger.warn({ origin }, 'CORS: origin not allowed');
         callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,

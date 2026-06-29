@@ -1,10 +1,11 @@
 'use strict';
 
-const Task        = require('../../models/task.model');
-const User        = require('../../models/user.model');
-const Customer    = require('../../models/customer.model');
+const Task         = require('../../models/task.model');
+const User         = require('../../models/user.model');
+const Customer     = require('../../models/customer.model');
 const emailService = require('../email/email.service');
-const logger      = require('../../utils/logger');
+const pushController = require('../push/push.controller');
+const logger       = require('../../utils/logger');
 
 const INTERVAL_MS = 60 * 60 * 1000; // check every hour
 let _timer = null;
@@ -41,6 +42,14 @@ async function sendReminders() {
                     customerName:    customer?.name || null,
                     priority:        task.priority,
                 });
+
+                // Also send push notification if subscribed
+                await pushController.sendPushToUser(user._id, {
+                    title: `Reminder: ${task.title}`,
+                    body:  `Due ${new Date(task.dueDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+                    icon:  '/logo192.png',
+                    url:   '/customers',
+                }).catch(() => {}); // non-fatal
 
                 await Task.findByIdAndUpdate(task._id, { reminderSentAt: now });
                 logger.info({ taskId: task._id, to: user.email }, 'Task reminder sent');

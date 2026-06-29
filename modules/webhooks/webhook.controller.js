@@ -54,6 +54,7 @@ exports.handleResendWebhook = async (req, res) => {
             }
             if (type === 'email.clicked' && !log.clickedAt) {
                 updates.clickedAt = new Date();
+                await Campaign.findByIdAndUpdate(log.campaign, { $inc: { 'deliveryStats.clicked': 1 } });
             }
             if (Object.keys(updates).length) await CommunicationLog.findByIdAndUpdate(log._id, updates);
             logger.info({ resendEmailId, type }, 'Email engagement tracked');

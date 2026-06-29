@@ -44,6 +44,7 @@ const teamRoutes            = require('./modules/team/team.routes');
 const campaignScheduler     = require('./modules/campaigns/campaign-scheduler.service');
 const sequenceScheduler     = require('./modules/sequences/sequence-scheduler.service');
 const taskReminderScheduler = require('./modules/tasks/task-reminder.service');
+const pushRoutes            = require('./modules/push/push.routes');
 
 // Import error middleware
 const errorHandler = require('./middleware/error.middleware');
@@ -154,6 +155,7 @@ app.use('/api/email',     emailRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/customers/:customerId/tasks', taskRoutes);
 app.use('/api/tasks', tasksGlobalRoutes);
+app.use('/api/push',  pushRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 app.use('/api/lead-forms', leadFormRoutes);

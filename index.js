@@ -69,6 +69,7 @@ app.use(helmet({
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const PRODUCTION_ORIGINS = [
     'https://flayx-crm.vercel.app',
+    'https://smart-serve-crm.vercel.app', // Vercel won't let us delete this system alias
 ];
 
 const allowedOrigins = [

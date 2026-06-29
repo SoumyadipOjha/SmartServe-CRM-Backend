@@ -8,6 +8,19 @@ Node.js + Express 5 REST API for Flayx CRM. Handles authentication, customer/ord
 
 ---
 
+## Recent Features (v2)
+
+| # | Feature | What it does |
+|---|---------|-------------|
+| 1 | **Empty states** | Blank list pages show a contextual prompt with a CTA button instead of nothing |
+| 2 | **Toast notifications** | Success/error feedback toast after every CRUD action across all pages |
+| 3 | **Email open & click tracking** | Resend webhooks update `deliveryStats.opened` / `deliveryStats.clicked` on campaigns in real time |
+| 4 | **Task reminders** | Hourly scheduler emails + push-notifies the task owner when a task is due within 24 hours |
+| 5 | **Onboarding wizard** | 3-step modal on first login walks new users through adding a customer, creating a deal, and launching a campaign |
+| 6 | **PWA + push notifications** | Service worker for offline/installable app; VAPID push notifications for task reminders |
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -20,7 +33,8 @@ Node.js + Express 5 REST API for Flayx CRM. Handles authentication, customer/ord
 | AI | Google Gemini API |
 | Logging | Pino (structured JSON logs) |
 | Security | Helmet, express-rate-limit, custom NoSQL sanitizer |
-| Scheduler | node-cron (campaign + sequence delivery) |
+| Push Notifications | web-push (VAPID / Web Push API) |
+| Scheduler | node setInterval (campaign, sequence, task reminder delivery) |
 
 ---
 
@@ -75,7 +89,11 @@ SmartServe-CRM-Backend/
 │   ├── tasks/
 │   │   ├── task.controller.js
 │   │   ├── task.routes.js
-│   │   └── tasks-global.routes.js
+│   │   ├── tasks-global.routes.js
+│   │   └── task-reminder.service.js   # hourly scheduler — sends reminder email + push 24h before due date
+│   ├── push/
+│   │   ├── push.controller.js         # getVapidKey, subscribe, unsubscribe, sendPushToUser
+│   │   └── push.routes.js
 │   ├── team/
 │   │   ├── team.controller.js     # Invite, accept, RBAC
 │   │   └── team.routes.js
@@ -93,8 +111,9 @@ SmartServe-CRM-Backend/
 │   ├── lead-form.model.js
 │   ├── custom-field.model.js
 │   ├── team-invite.model.js       # token, expiresAt, accepted
-│   ├── task.model.js
-│   └── communication-log.model.js
+│   ├── task.model.js                  # includes reminderSentAt — set when 24h reminder fires
+│   ├── push-subscription.model.js     # stores browser PushSubscription objects per user
+│   └── communication-log.model.js     # openedAt + clickedAt tracked via Resend webhooks
 ├── services/                      # Shared/utility services (cross-domain)
 │   ├── vendor.service.js          # Delivery orchestration — sends emails, updates stats
 │   ├── query-builder.service.js
@@ -203,6 +222,13 @@ CLIENT_URL=http://localhost:3000
 
 # Email (Resend)
 RESEND_API_KEY=re_...
+RESEND_WEBHOOK_SECRET=whsec_...   # optional — set in Resend dashboard to enable signature verification
+
+# Push Notifications (VAPID)
+# Generate once: node -e "const wp=require('web-push'); console.log(wp.generateVAPIDKeys())"
+VAPID_PUBLIC_KEY=<base64url public key>
+VAPID_PRIVATE_KEY=<base64url private key>
+VAPID_EMAIL=mailto:admin@yourdomain.com
 
 # AI
 GEMINI_API_KEY=your-gemini-api-key
@@ -369,10 +395,23 @@ POST   /api/email/test
 ### Webhooks
 
 ```
-GET    /api/webhooks
-POST   /api/webhooks
-DELETE /api/webhooks/:id
+POST   /api/webhooks/resend    Called by Resend on email.opened / email.clicked / email.bounced
 ```
+
+Signature verified via HMAC-SHA256 (Svix headers). Increments `campaign.deliveryStats.opened`
+and `campaign.deliveryStats.clicked` in real time.
+
+### Push Notifications (PWA)
+
+```
+GET    /api/push/vapid-key           Public — returns VAPID public key for browser subscription
+POST   /api/push/subscribe           Store a PushSubscription object (auth required)
+POST   /api/push/unsubscribe         Remove a subscription (auth required)
+```
+
+The task reminder scheduler calls `sendPushToUser()` internally to deliver push notifications
+alongside the reminder email. Expired subscriptions (HTTP 410/404 from push service) are
+automatically pruned.
 
 ### System
 
@@ -433,6 +472,12 @@ mongoose.connection.close().then(...).catch(...)
 
 **`findOneAndUpdate` skips `pre('save')` hooks**  
 Any token/default generation must happen in the controller, not in a Mongoose save hook, when using upserts. See `controllers/team.controller.js` for the invite token pattern.
+
+**`CLIENT_URL` must match the frontend origin exactly**  
+CORS rejects any origin not in `allowedOrigins`. A missing or wrong `CLIENT_URL` returns a 500
+with no CORS headers — the browser sees a network failure, not a 403. Always set `CLIENT_URL`
+to the exact Vercel URL (`https://smart-serve-crm.vercel.app`) with no trailing slash.
+The production Vercel URL is also hardcoded as a fallback in `index.js`.
 
 **Render silent fallback on SyntaxError**  
 If `index.js` has a syntax error (e.g. from committed git conflict markers), Render keeps the previous container running rather than crashing. Symptom: health check 200 but new routes return 404.

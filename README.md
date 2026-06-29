@@ -476,7 +476,7 @@ Any token/default generation must happen in the controller, not in a Mongoose sa
 **`CLIENT_URL` must match the frontend origin exactly**  
 CORS rejects any origin not in `allowedOrigins`. A missing or wrong `CLIENT_URL` returns a 500
 with no CORS headers — the browser sees a network failure, not a 403. Always set `CLIENT_URL`
-to the exact Vercel URL (`https://smart-serve-crm.vercel.app`) with no trailing slash.
+to the exact Vercel URL (`https://flayx-crm.vercel.app`) with no trailing slash.
 The production Vercel URL is also hardcoded as a fallback in `index.js`.
 
 **Render silent fallback on SyntaxError**  

@@ -251,7 +251,7 @@ const emailService = {
             </table>
             <table cellpadding="0" cellspacing="0" style="margin:0 auto 8px auto;">
               <tr><td style="background:#2C7A7B;border-radius:8px;">
-                <a href="${process.env.FRONTEND_URL || 'https://smart-serve-crm.vercel.app'}"
+                <a href="${process.env.FRONTEND_URL || 'https://flayx-crm.vercel.app'}"
                    style="display:block;padding:14px 36px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
                   Open Flayx CRM &#8594;
                 </a>

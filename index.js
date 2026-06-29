@@ -68,7 +68,7 @@ app.use(helmet({
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const PRODUCTION_ORIGINS = [
-    'https://smart-serve-crm.vercel.app',
+    'https://flayx-crm.vercel.app',
 ];
 
 const allowedOrigins = [

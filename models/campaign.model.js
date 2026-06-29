@@ -52,6 +52,14 @@ const campaignSchema = new mongoose.Schema({
         failed: {
             type: Number,
             default: 0
+        },
+        opened: {
+            type: Number,
+            default: 0
+        },
+        clicked: {
+            type: Number,
+            default: 0
         }
     },
     status: {

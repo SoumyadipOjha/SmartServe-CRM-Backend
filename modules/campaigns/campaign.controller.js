@@ -130,10 +130,11 @@ exports.getCampaignStats = async (req, res) => {
         const campaign = await Campaign.findOne({ _id: req.params.id, createdBy: req.user.id });
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
 
-        const [sentCount, openedCount, failedCount] = await Promise.all([
+        const [sentCount, openedCount, failedCount, clickedCount] = await Promise.all([
             CommunicationLog.countDocuments({ campaign: req.params.id, status: 'sent'   }),
             CommunicationLog.countDocuments({ campaign: req.params.id, status: 'opened' }),
             CommunicationLog.countDocuments({ campaign: req.params.id, status: 'failed' }),
+            CommunicationLog.countDocuments({ campaign: req.params.id, clickedAt: { $exists: true } }),
         ]);
 
         let variantStats = null;
@@ -162,6 +163,7 @@ exports.getCampaignStats = async (req, res) => {
             stats: {
                 sent: sentCount,
                 opened: openedCount,
+                clicked: clickedCount,
                 failed: failedCount,
                 audienceSize: campaign.audienceSize,
                 isAbTest: campaign.isAbTest,
